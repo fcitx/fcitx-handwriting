@@ -1,0 +1,10 @@
+
+
+1. 可执行文件名: handwrite
+2. UI 路径: $HOME/.fcitx/handwrite/*
+3. 需要安装手写库: 
+http://zinnia.sourceforge.net/
+安装时请把手写库安装到: /usr/lib/zinnia/model/tomoe/handwriting-zh_CN.model
+(默认安装是安装到:/usr/local/lib/zinnia/... ...)
+4. 程序中的 "ABC" 和 "123" 两个功能暂时不可用.
+5. 手写识别还有待细细调整.

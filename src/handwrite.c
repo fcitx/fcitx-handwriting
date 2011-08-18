@@ -1,22 +1,23 @@
 //      handwrite.c
-//      
+//
 //      Copyright 2011 wolf <chfc2009@yeah.net>
-//      
+//
 //      This program is free software; you can redistribute it and/or modify
 //      it under the terms of the GNU General Public License as published by
 //      the Free Software Foundation; either version 2 of the License, or
 //      (at your option) any later version.
-//      
+//
 //      This program is distributed in the hope that it will be useful,
 //      but WITHOUT ANY WARRANTY; without even the implied warranty of
 //      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //      GNU General Public License for more details.
-//      
+//
 //      You should have received a copy of the GNU General Public License
 //      along with this program; if not, write to the Free Software
 //      Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 //      MA 02110-1301, USA.
 
+#include "config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -37,14 +38,14 @@
 Point p;
 gboolean PASS_FLAG = FALSE;
 
-static void 
+static void
 set_window_background (GtkWidget *window, KeyBoard *keyboard)
 {
 	GdkPixbuf *pixbuf;
 	GdkBitmap *bitmap;
 	GdkPixmap *pixmap;
 	gchar filepath[256];
-	
+
 	sprintf (filepath, "%s/beijing.png", keyboard->userdir);
 	pixbuf = gdk_pixbuf_new_from_file (filepath, NULL);
 	gdk_pixbuf_render_pixmap_and_mask (pixbuf, &pixmap, &bitmap, 128);
@@ -57,9 +58,9 @@ set_window_background (GtkWidget *window, KeyBoard *keyboard)
 	g_object_unref (pixbuf);
 }
 
-static gboolean 
+static gboolean
 window_move_callback (GtkWidget* widget, GdkEventButton *event, GdkWindowEdge edge)
-{		
+{
 	if (event->type == GDK_BUTTON_PRESS)
 	{
 		if (3 == event->button) {
@@ -70,11 +71,11 @@ window_move_callback (GtkWidget* widget, GdkEventButton *event, GdkWindowEdge ed
 			event->time);
 		}
 	}
-	
+
 	return FALSE;
 }
 
-static void 
+static void
 simulation_keyboard_input (int key_code)
 {
 	Display* disp = XOpenDisplay( NULL );
@@ -86,7 +87,7 @@ simulation_keyboard_input (int key_code)
 	XCloseDisplay(disp);
 }
 
-static void 
+static void
 set_button_font (GtkWidget *bt)
 {
 	GtkWidget *font_label;
@@ -100,11 +101,8 @@ static gchar *
 get_handwrite_config_dir ()
 {
 	gchar *configdir;
-	const gchar *homedir = g_getenv ("HOME");
-	if (!homedir)
-		homedir = g_get_home_dir ();
-	configdir = g_strdup_printf ("%s/.fcitx/handwrite", homedir);
-	
+	configdir = g_strdup_printf ( DATADIR "/fcitx/handwrite");
+
 	return configdir;
 }
 
@@ -112,7 +110,7 @@ static gboolean
 create_dbus (KeyBoard *keyboard)
 {
 	DBusError error;
-	
+
 	dbus_error_init (&error);
 	keyboard->bus = dbus_bus_get (DBUS_BUS_SESSION, &error);
 	if (!keyboard->bus) {
@@ -131,22 +129,22 @@ send_word_callback (GtkButton *button, gpointer data)
 	KeyBoard *keyboard = (KeyBoard *)data;
 	DBusMessage *message;
 	const gchar *label;
-	
+
 	label = gtk_button_get_label (GTK_BUTTON (button));
 		dbg ("%s \n", label);
-	
+
 	if (!label)
 		return ;
-		
-	message = dbus_message_new_signal ("/fcitx/handwrite/dbus/signal", 
-									"fcitx.handwrite.dbus.signal", 
+
+	message = dbus_message_new_signal ("/fcitx/handwrite/dbus/signal",
+									"fcitx.handwrite.dbus.signal",
 									"fcitxsignal");
 	dbus_message_set_no_reply(message, TRUE);
 	dbus_message_append_args(message, DBUS_TYPE_STRING, &label, DBUS_TYPE_INVALID);
 	dbus_connection_send(keyboard->bus, message, NULL);
-	
+
 	dbus_message_unref(message);
-	
+
 }
 
 static void
@@ -168,7 +166,7 @@ keyboard_prevpage_callback (GtkButton *button, gpointer data)
 {
 	KeyBoard *keyboard = (KeyBoard *)data;
 	int i, j;
-	
+
 	if (keyboard->pagenum == 0)
 		return;
 	keyboard->pagenum--;
@@ -177,7 +175,7 @@ keyboard_prevpage_callback (GtkButton *button, gpointer data)
 		gtk_button_set_label (GTK_BUTTON(keyboard->hand_button[i]), keyboard->value[j]);
 		j++;
 	}
-	
+
 }
 
 static void
@@ -185,7 +183,7 @@ keyboard_nextpage_callback (GtkButton *button, gpointer data)
 {
 	KeyBoard *keyboard = (KeyBoard *)data;
 	int i, j;
-	
+
 	if (keyboard->pagenum >= (HAND_WORD_NUM / 9)-1)
 		return;
 	keyboard->pagenum++;
@@ -194,7 +192,7 @@ keyboard_nextpage_callback (GtkButton *button, gpointer data)
 		gtk_button_set_label (GTK_BUTTON(keyboard->hand_button[i]), keyboard->value[j]);
 		j++;
 	}
-	
+
 }
 
 static void
@@ -213,10 +211,10 @@ static void
 keyboard_close_callback (GtkButton *button, gpointer data)
 {
 	KeyBoard *keyboard = (KeyBoard *)data;
-	
+
 #if 0
 	gtk_widget_hide (keyboard->window);
-#else	
+#else
 	zinnia_character_destroy(keyboard->stk->charactera);
 	zinnia_recognizer_destroy(keyboard->stk->recognizer);
 	gtk_main_quit ();
@@ -227,24 +225,24 @@ static void
 keyboard_rewrite_callback (GtkButton *button, gpointer data)
 {
 	KeyBoard *keyboard = (KeyBoard *)data;
-	
+
 	stroke_clean (keyboard->stk);
 	gtk_widget_queue_draw (keyboard->window);
 }
 
-static void 
+static void
 get_word_from_charlib (KeyBoard *keyboard)
 {
 	zinnia_result_t *result;
 	size_t i;
 	const char *value;
-	
+
 	result = zinnia_recognizer_classify(keyboard->stk->recognizer, keyboard->stk->charactera, HAND_WORD_NUM);
 	if (result == NULL) {
 		fprintf(stderr, "%s\n", zinnia_recognizer_strerror(keyboard->stk->recognizer));
 		return;
 	}
-	
+
 	for (i = 0; i < zinnia_result_size(result); ++i) {
 		value = zinnia_result_value(result, i);
 		keyboard->value[i] = (gchar *)value;
@@ -256,26 +254,26 @@ get_word_from_charlib (KeyBoard *keyboard)
 	zinnia_result_destroy(result);
 }
 
-static gboolean 
+static gboolean
 handwriter_press_filter (GtkWidget *widget, GdkEventButton *event, gpointer data)
 {
 	KeyBoard *keyboard = (KeyBoard *)data;
-	
+
 	if (1 == event->button)
 	{
 		if (keyboard->stk->timer > 0)
 			g_source_remove (keyboard->stk->timer);
 		stroke_start (keyboard->stk);
-		
+
 		PASS_FLAG = TRUE;
 		//~ zinnia_character_add (keyboard->stk->charactera, keyboard->stk->num, event->x, event->y);
-		
+
 		gtk_widget_queue_draw (widget);
 	}
 	return FALSE;
 }
 
-static gboolean 
+static gboolean
 handwriter_timeout (gpointer data)
 {
 	KeyBoard *keyboard = (KeyBoard *)data;
@@ -288,28 +286,28 @@ handwriter_timeout (gpointer data)
 	get_word_from_charlib (keyboard);		/* 从字库中获取字 */
 	stroke_clean (keyboard->stk);
 	//~ gtk_widget_queue_draw (keyboard->window);
-	
+
 	keyboard->stk->num = 0;
 	zinnia_character_clear(keyboard->stk->charactera);
 
 	return FALSE;
 }
 
-static gboolean 
+static gboolean
 handwriter_release_filter(GtkWidget *widget, GdkEventButton *event, gpointer data)
 {
 	KeyBoard *keyboard = (KeyBoard *)data;
 	Point p;
-	
+
 	if (1 == event->button)
 	{
 		p.x = -1;
 		p.y = -1;
 		add_point_start(keyboard->stk,p);
-		
+
 		PASS_FLAG = FALSE;
 		//~ zinnia_character_add (keyboard->stk->charactera, keyboard->stk->num, event->x, event->y);
-		
+
 		gtk_widget_queue_draw (widget);
 		keyboard->stk->num = keyboard->stk->num + 1;
 		keyboard->stk->timer = g_timeout_add (1000, handwriter_timeout, keyboard);
@@ -323,7 +321,7 @@ static gboolean handwriter_motion_filter (GtkWidget *widget, GdkEventMotion *eve
 	GdkModifierType state;
 	Point p;
 	int x,y;
-	
+
 	if (PASS_FLAG) {
 		gdk_window_get_pointer (event->window, &x, &y, &state );
 		//~ if (x%5)
@@ -332,7 +330,7 @@ static gboolean handwriter_motion_filter (GtkWidget *widget, GdkEventMotion *eve
 	else {
 		return FALSE;
 	}
-	
+
 	if (( state & GDK_BUTTON1_MASK ))
 	{
 		p.x = (short)x;
@@ -341,7 +339,7 @@ static gboolean handwriter_motion_filter (GtkWidget *widget, GdkEventMotion *eve
 		gtk_widget_queue_draw (widget);
 		return FALSE;
 	}
-		
+
 	return FALSE;
 }
 
@@ -349,7 +347,7 @@ static gboolean
 handwriter_expose_event (GtkWidget * widget, GdkEventExpose * event, gpointer data)
 {
 	KeyBoard *keyboard = (KeyBoard *)data;
-	
+
 	if (keyboard->stk == NULL || keyboard->stk->pixmap == NULL)
 		return FALSE;
 
@@ -363,7 +361,7 @@ handwriter_expose_event (GtkWidget * widget, GdkEventExpose * event, gpointer da
 	return TRUE;
 }
 
-static GtkWidget * 
+static GtkWidget *
 create_handwriter_canvas (KeyBoard *keyboard)
 {
 	gchar filepath[256];
@@ -393,7 +391,7 @@ create_handwriter_canvas (KeyBoard *keyboard)
 
 	g_signal_connect (ebox, "expose-event",
 			G_CALLBACK (handwriter_expose_event), keyboard);
-			
+
 	return ebox;
 }
 
@@ -409,12 +407,12 @@ create_hand_button (KeyBoard *keyboard)
 	int btx1[] = {111,182,253,111,182,253,111,182,253};
 	int bty1[] = {11,11,11,75,75,75,139,139,139};
 	int i, j;
-	
+
 	fixed = gtk_fixed_new ();
 	gtk_widget_show (fixed);
-	
+
 	/* 创建手写字显示按钮 */
-	for (i = 0 ;i < HAND_BUTTON_NUM ; i++) 
+	for (i = 0 ;i < HAND_BUTTON_NUM ; i++)
 	{
 		keyboard->hand_button[i] = gtk_button_new ();
 		gtk_widget_set_size_request (GTK_WIDGET (keyboard->hand_button[i]), 65, 58);
@@ -423,7 +421,7 @@ create_hand_button (KeyBoard *keyboard)
 		gtk_widget_set_name(keyboard->hand_button[i], "button6");
 		gtk_widget_show (keyboard->hand_button[i]);
 	}
-	
+
 	/* 创建功能控制按钮 */
 	for (i = 0 ;i < 8 ; i++)
 	{
@@ -442,12 +440,12 @@ create_hand_button (KeyBoard *keyboard)
 	g_signal_connect (hand_change_bt[5], "clicked", G_CALLBACK (keyboard_spaces_callback), NULL);
 	g_signal_connect (hand_change_bt[6], "clicked", G_CALLBACK (keyboard_close_callback), keyboard);
 	g_signal_connect (hand_change_bt[7], "clicked", G_CALLBACK (keyboard_rewrite_callback), keyboard);
-	
+
 	/* 创建手写的画图区域 */
 	drawing = create_handwriter_canvas (keyboard);
 	gtk_fixed_put (GTK_FIXED (fixed), drawing, 333, 8);
 	gtk_widget_show (drawing);
-	
+
 	return fixed;
 }
 
@@ -457,7 +455,7 @@ create_window ()
 	GtkWidget *fixed;
 	KeyBoard *keyboard;
 	gchar filepath[256];
-	
+
 	keyboard = g_new0 (KeyBoard,1);
 	if (!create_dbus (keyboard))							/* 创建D-BUS */
 	{
@@ -465,14 +463,14 @@ create_window ()
 		return NULL;
 	}
 	keyboard->userdir = get_handwrite_config_dir ();
-	
+
 	gchar *rcpath = g_strdup_printf ("%s/gtkrc", keyboard->userdir);
 	gtk_rc_parse (rcpath);	/* 设置GTKRC */
 	g_free (rcpath);
-	
+
 	sprintf (filepath, "%s/writer.png", keyboard->userdir);
 	keyboard->stk = stroke_create (filepath);		/* 手写初始化 */
-	
+
 	/* 创建键盘窗口 */
 	keyboard->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size (GTK_WINDOW (keyboard->window), 800, 210);
@@ -483,34 +481,34 @@ create_window ()
 	gtk_window_set_position (GTK_WINDOW (keyboard->window), GTK_WIN_POS_CENTER);
 	gtk_widget_add_events (keyboard->window, GDK_BUTTON_PRESS_MASK);
 	gtk_widget_show (keyboard->window);
-	
+
 	/* 按下鼠标右键可移动窗口 */
 	g_signal_connect (keyboard->window, "button-press-event",
 				G_CALLBACK(window_move_callback), NULL);
-	
+
 	set_window_background (keyboard->window, keyboard);		/*设置窗口背景*/
-	
+
 	fixed = gtk_fixed_new ();
 	gtk_container_add (GTK_CONTAINER (keyboard->window), fixed);
 	gtk_widget_show (fixed);
-	
+
 	/* 创建手写界面部件 */
 	keyboard->hand_fixed = create_hand_button (keyboard);
 	gtk_fixed_put (GTK_FIXED(fixed), keyboard->hand_fixed, 0, 0);
-	
+
 	return keyboard->window;
 }
 
 int main(int argc, char **argv)
 {
 	GtkWidget *window = NULL;
-	
+
 	gtk_init (&argc, &argv);
-	
+
 	window = create_window ();
 	if (!window)
 		return 1;
-	
+
 	gtk_main ();
 	return 0;
 }

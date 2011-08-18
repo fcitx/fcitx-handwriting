@@ -24,3 +24,4 @@ target_link_libraries(fcitx-handwrite
     ${ZINNIA_LIBRARIES}
     ${X11_XTest_LIB}
 )
+install(TARGETS fcitx-handwrite DESTINATION bin)

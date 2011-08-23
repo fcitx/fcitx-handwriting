@@ -17,11 +17,12 @@ set(FCITX_HANDWRITE_SRCS
     stroke.c
 )
 
-add_executable(fcitx-handwrite ${FCITX_HANDWRITE_SRCS})
-target_link_libraries(fcitx-handwrite
+add_executable(fcitx-handwriting ${FCITX_HANDWRITE_SRCS})
+target_link_libraries(fcitx-handwriting
     ${GTK2_LIBRARIES}
     ${DBUS_GLIB_LIBRARIES}
     ${ZINNIA_LIBRARIES}
     ${X11_XTest_LIB}
+    ${X11_LIBRARIES}
 )
-install(TARGETS fcitx-handwrite DESTINATION bin)
+install(TARGETS fcitx-handwriting DESTINATION bin)

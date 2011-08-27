@@ -4,7 +4,7 @@
 #include "stroke.h"
 
 #define HAND_BUTTON_NUM	9
-#define HAND_WORD_NUM 81
+#define HAND_WORD_NUM 54
 
 #define DEBUG  1
 #ifdef DEBUG

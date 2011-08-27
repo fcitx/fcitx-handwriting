@@ -97,6 +97,17 @@ set_button_font (GtkWidget *bt)
 	gtk_widget_modify_font(font_label, text_font);
 }
 
+static void
+set_font_size (GtkWidget *bt)
+{
+	GtkWidget *font_label;
+	PangoFontDescription* text_font = NULL;
+	//~ text_font = pango_font_description_from_string("Arial,bold 13");
+	text_font = pango_font_description_from_string("WenQuanYi Zen Hei 13");
+	font_label = gtk_bin_get_child(GTK_BIN(bt));
+	gtk_widget_modify_font(font_label, text_font);
+}
+
 static gchar *
 get_handwrite_config_dir ()
 {
@@ -145,20 +156,53 @@ send_word_callback (GtkButton *button, gpointer data)
 
 	dbus_message_unref(message);
 
+	stroke_clean (keyboard->stk);
+	gtk_widget_queue_draw (keyboard->window);
+
 }
 
 static void
 keyboard_english_callback (GtkButton *button, gpointer data)
 {
-	dbg ("%s \n", __FUNCTION__);
 	KeyBoard *keyboard = (KeyBoard *)data;
+	int i;
+	gchar *english_info[HAND_WORD_NUM] = {"a","b","c","d","e","f","g","h","i",
+										"j","k","l","m","n","o","p","q","r",
+										"s","t","u","v","w","x","y","z","A",
+										"B","C","D","E","F","G","H","I","J",
+										"K","L","M","N","O","P","Q","R","S",
+										"T","U","V","W","X","Y","Z","'","\""};
+
+	for (i = 0; i < HAND_WORD_NUM; i++) {
+		keyboard->value[i] = english_info[i];
+		if (i < 9) {
+			gtk_button_set_label (GTK_BUTTON(keyboard->hand_button[i]), english_info[i]);
+			set_font_size (keyboard->hand_button[i]);
+		}
+	}
+	keyboard->pagenum = 0;
 }
 
 static void
 keyboard_number_callback (GtkButton *button, gpointer data)
 {
-	dbg ("%s \n", __FUNCTION__);
 	KeyBoard *keyboard = (KeyBoard *)data;
+	int i;
+	gchar *number_info[HAND_WORD_NUM] = {"1","2","3","4","5","6","7","8","9",
+										"0",",",".","?","!",":","\"","'","(",
+										")","{","}","<",">","[","]","%","#",
+										"@","$","^","&","+","-","*","/","=",
+										"_","\\","`","~","0","9","8","7","6",
+										"5","4","3","2","1","0","10","100","500"};
+	
+	for (i = 0; i < HAND_WORD_NUM; i++) {
+		keyboard->value[i] = number_info[i];
+		if (i < 9) {
+			gtk_button_set_label (GTK_BUTTON(keyboard->hand_button[i]), number_info[i]);
+			set_font_size (keyboard->hand_button[i]);
+		}
+	}
+	keyboard->pagenum = 0;
 }
 
 static void
@@ -173,6 +217,7 @@ keyboard_prevpage_callback (GtkButton *button, gpointer data)
 	j = 9 * keyboard->pagenum;
 	for (i = 0; i < 9; i++) {
 		gtk_button_set_label (GTK_BUTTON(keyboard->hand_button[i]), keyboard->value[j]);
+		set_font_size (keyboard->hand_button[i]);
 		j++;
 	}
 
@@ -190,6 +235,7 @@ keyboard_nextpage_callback (GtkButton *button, gpointer data)
 	j = 9 * keyboard->pagenum;
 	for (i = 0; i < 9; i++) {
 		gtk_button_set_label (GTK_BUTTON(keyboard->hand_button[i]), keyboard->value[j]);
+		set_font_size (keyboard->hand_button[i]);
 		j++;
 	}
 
@@ -222,12 +268,9 @@ keyboard_close_callback (GtkButton *button, gpointer data)
 }
 
 static void
-keyboard_rewrite_callback (GtkButton *button, gpointer data)
+keyboard_enter_callback (GtkButton *button, gpointer data)
 {
-	KeyBoard *keyboard = (KeyBoard *)data;
-
-	stroke_clean (keyboard->stk);
-	gtk_widget_queue_draw (keyboard->window);
+	simulation_keyboard_input (36);		/* 输入空格键 */
 }
 
 static void
@@ -246,8 +289,10 @@ get_word_from_charlib (KeyBoard *keyboard)
 	for (i = 0; i < zinnia_result_size(result); ++i) {
 		value = zinnia_result_value(result, i);
 		keyboard->value[i] = (gchar *)value;
-		if (i < 9)
+		if (i < 9) {
 			gtk_button_set_label (GTK_BUTTON(keyboard->hand_button[i]), value);
+			set_font_size (keyboard->hand_button[i]);
+		}
 	}
 	keyboard->pagenum = 0;
 
@@ -327,9 +372,8 @@ static gboolean handwriter_motion_filter (GtkWidget *widget, GdkEventMotion *eve
 		//~ if (x%5)
 			zinnia_character_add (keyboard->stk->charactera, keyboard->stk->num, x, y);
 	}
-	else {
+	else 
 		return FALSE;
-	}
 
 	if (( state & GDK_BUTTON1_MASK ))
 	{
@@ -401,7 +445,7 @@ create_hand_button (KeyBoard *keyboard)
 	GtkWidget *fixed;
 	GtkWidget *drawing;
 	GtkWidget *hand_change_bt[7];
-	char *hand_button_info[] = {"ABC","123","上页","下页","删除","空格","关闭","重写"};
+	gchar *hand_button_info[] = {"ABC","123.,","上页","下页","删除","空格","回车","关闭"};
 	int btx[] = {8,8,8,8,705,705,705,705};
 	int bty[] = {8,58,108,158,8,58,108,158};
 	int btx1[] = {111,182,253,111,182,253,111,182,253};
@@ -418,7 +462,7 @@ create_hand_button (KeyBoard *keyboard)
 		gtk_widget_set_size_request (GTK_WIDGET (keyboard->hand_button[i]), 65, 58);
 		gtk_fixed_put (GTK_FIXED (fixed), keyboard->hand_button[i], btx1[i], bty1[i]);
 		g_signal_connect (keyboard->hand_button[i], "clicked", G_CALLBACK (send_word_callback), keyboard);
-		gtk_widget_set_name(keyboard->hand_button[i], "button6");
+		gtk_widget_set_name(keyboard->hand_button[i], "button1");
 		gtk_widget_show (keyboard->hand_button[i]);
 	}
 
@@ -438,8 +482,8 @@ create_hand_button (KeyBoard *keyboard)
 	g_signal_connect (hand_change_bt[3], "clicked", G_CALLBACK (keyboard_nextpage_callback), keyboard);
 	g_signal_connect (hand_change_bt[4], "clicked", G_CALLBACK (keyboard_backspace_callback), NULL);
 	g_signal_connect (hand_change_bt[5], "clicked", G_CALLBACK (keyboard_spaces_callback), NULL);
-	g_signal_connect (hand_change_bt[6], "clicked", G_CALLBACK (keyboard_close_callback), keyboard);
-	g_signal_connect (hand_change_bt[7], "clicked", G_CALLBACK (keyboard_rewrite_callback), keyboard);
+	g_signal_connect (hand_change_bt[6], "clicked", G_CALLBACK (keyboard_enter_callback), NULL);
+	g_signal_connect (hand_change_bt[7], "clicked", G_CALLBACK (keyboard_close_callback), keyboard);
 
 	/* 创建手写的画图区域 */
 	drawing = create_handwriter_canvas (keyboard);

@@ -42,6 +42,12 @@ void* HandWritingCreate ( FcitxInstance* instance )
 	handwriting->owner = instance;
 	handwriting->conn = InvokeFunction ( instance, FCITX_DBUS, GETCONNECTION, arg );
 
+	if (handwriting->conn == NULL)
+	{
+		free ( handwriting );
+		return NULL;
+	}
+
 	DBusError err;
 	dbus_error_init ( &err );
 	dbus_bus_add_match ( handwriting->conn,

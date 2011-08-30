@@ -28,12 +28,14 @@
 #include <gdk/gdkx.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus.h>
+#include <dbus/dbus-glib-bindings.h>
 #include <X11/extensions/XTest.h>
 #include <X11/keysym.h>
 #include <X11/extensions/XInput.h>
 #include <zinnia.h>
 
 #include "handwrite.h"
+#include "service.h"
 
 Point p;
 gboolean PASS_FLAG = FALSE;
@@ -120,16 +122,24 @@ get_handwrite_config_dir ()
 static gboolean
 create_dbus (KeyBoard *keyboard)
 {
-	DBusError error;
-
-	dbus_error_init (&error);
-	keyboard->bus = dbus_bus_get (DBUS_BUS_SESSION, &error);
+	GError* error = NULL;
+    guint   result;
+	keyboard->bus = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
 	if (!keyboard->bus) {
-		g_warning ("Failed to connect to the D-BUS daemon: %s", error.message);
-		dbus_error_free (&error);
+		g_warning ("Failed to connect to the D-BUS daemon: %s", error->message);
 		return FALSE;
 	}
-	dbus_connection_setup_with_g_main (keyboard->bus, NULL);
+    keyboard->proxy = dbus_g_proxy_new_for_name (keyboard->bus,
+                DBUS_SERVICE_DBUS,
+                DBUS_PATH_DBUS,
+                DBUS_INTERFACE_DBUS);
+    org_freedesktop_DBus_request_name(keyboard->proxy,
+                DBUS_HANDWRITING_SERVICE,
+                DBUS_NAME_FLAG_DO_NOT_QUEUE, &result, &error);
+
+    HandWritingService *service = g_object_new (TYPE_HANDWRITING_SERVICE, NULL);
+    dbus_g_connection_register_g_object (keyboard->bus, DBUS_HANDWRITING_SERVICE_PATH, G_OBJECT(service));
+    keyboard->service = service;
 
 	return TRUE;
 }
@@ -138,7 +148,6 @@ static void
 send_word_callback (GtkButton *button, gpointer data)
 {
 	KeyBoard *keyboard = (KeyBoard *)data;
-	DBusMessage *message;
 	const gchar *label;
 
 	label = gtk_button_get_label (GTK_BUTTON (button));
@@ -147,14 +156,7 @@ send_word_callback (GtkButton *button, gpointer data)
 	if (!label)
 		return ;
 
-	message = dbus_message_new_signal ("/fcitx/handwrite/dbus/signal",
-									"fcitx.handwrite.dbus.signal",
-									"fcitxsignal");
-	dbus_message_set_no_reply(message, TRUE);
-	dbus_message_append_args(message, DBUS_TYPE_STRING, &label, DBUS_TYPE_INVALID);
-	dbus_connection_send(keyboard->bus, message, NULL);
-
-	dbus_message_unref(message);
+	handwriting_serice_sendword(keyboard->service, label);
 
 	stroke_clean (keyboard->stk);
 	gtk_widget_queue_draw (keyboard->window);
@@ -194,7 +196,7 @@ keyboard_number_callback (GtkButton *button, gpointer data)
 										"@","$","^","&","+","-","*","/","=",
 										"_","\\","`","~","0","9","8","7","6",
 										"5","4","3","2","1","0","10","100","500"};
-	
+
 	for (i = 0; i < HAND_WORD_NUM; i++) {
 		keyboard->value[i] = number_info[i];
 		if (i < 9) {
@@ -372,7 +374,7 @@ static gboolean handwriter_motion_filter (GtkWidget *widget, GdkEventMotion *eve
 		//~ if (x%5)
 			zinnia_character_add (keyboard->stk->charactera, keyboard->stk->num, x, y);
 	}
-	else 
+	else
 		return FALSE;
 
 	if (( state & GDK_BUTTON1_MASK ))

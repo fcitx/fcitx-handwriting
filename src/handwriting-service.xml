@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<node>
+  <interface name="org.fcitx.HandWriting">
+    <signal name="send_word">
+      <arg type="s" name="string" direction="out" />
+    </signal>
+  </interface>
+</node>

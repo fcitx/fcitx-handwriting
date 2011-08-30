@@ -1,0 +1,10 @@
+[Addon]
+Name=fcitx-handwriting
+_GeneralName=Hand Writing
+_Comment=Hand Writing support for fcitx
+Category=InputMethod
+Enabled=True
+Library=fcitx-handwriting.so
+Type=SharedLibrary
+Dependency=fcitx-dbus
+SubConfig=

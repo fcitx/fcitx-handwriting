@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.fcitx.HandWriting
+Exec=@BINDIR@/fcitx-handwriting

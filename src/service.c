@@ -58,7 +58,7 @@ handwriting_service_new ( void )
 	return g_object_new ( TYPE_HANDWRITING_SERVICE, NULL );
 }
 
-gboolean handwriting_serice_sendword ( HandWritingService* service, const gchar* string )
+void handwriting_serice_sendword ( HandWritingService* service, const gchar* string )
 {
 	g_signal_emit ( service,
 	                handwriting_service_signals[E_SIGNAL_SEND_WORD],

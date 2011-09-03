@@ -39,7 +39,7 @@ struct _HandWritingServiceClass {
 
 HandWritingService *handwriting_service_new (void);
 GType handwriting_service_get_type (void);
-gboolean handwriting_serice_sendword(HandWritingService* service, const gchar* string);
+void handwriting_serice_sendword(HandWritingService* service, const gchar* string);
 
 
 G_END_DECLS

@@ -16,5 +16,10 @@ fcitx_add_addon(fcitx-handwriting-im ${HANDWRITING_IM_SRCS})
 set_target_properties(fcitx-handwriting-im PROPERTIES
     OUTPUT_NAME fcitx-handwriting
 )
-target_link_libraries(fcitx-handwriting-im ${DBUS_LIBRARIES})
+target_link_libraries(fcitx-handwriting-im
+                      ${DBUS_LIBRARIES}
+                      ${FCITX4_FCITX_LIBRARIES}
+                      ${FCITX4_FCITX_CONFIG_LIBRARIES}
+                      ${FCITX4_FCITX_UTILS_LIBRARIES}
+)
 fcitx_add_addon_conf_file(fcitx-handwriting.conf)

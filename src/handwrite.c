@@ -469,7 +469,7 @@ create_hand_button ( KeyBoard *keyboard )
 	int bty[] = {8,58,108,158,8,58,108,158};
 	int btx1[] = {111,182,253,111,182,253,111,182,253};
 	int bty1[] = {11,11,11,75,75,75,139,139,139};
-	int i, j;
+	int i;
 
 	fixed = gtk_fixed_new ();
 	gtk_widget_show ( fixed );

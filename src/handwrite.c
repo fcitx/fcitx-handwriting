@@ -463,7 +463,7 @@ create_hand_button ( KeyBoard *keyboard )
 {
 	GtkWidget *fixed;
 	GtkWidget *drawing;
-	GtkWidget *hand_change_bt[7];
+	GtkWidget *hand_change_bt[8];
 	gchar *hand_button_info[] = {"ABC","123.,","上页","下页","删除","空格","回车","关闭"};
 	int btx[] = {8,8,8,8,705,705,705,705};
 	int bty[] = {8,58,108,158,8,58,108,158};

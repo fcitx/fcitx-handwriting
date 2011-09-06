@@ -1,11 +1,11 @@
-#include <fcitx/ime.h>
-#include <fcitx/module.h>
-#include <fcitx/instance.h>
-#include <fcitx/candidate.h>
 #include <fcitx/module/dbus/dbusstuff.h>
 #include <fcitx/frontend.h>
 #include <fcitx-utils/log.h>
 #include <libintl.h>
+#include <fcitx/ime.h>
+#include <fcitx/instance.h>
+#include <fcitx/module.h>
+#include <fcitx/candidate.h>
 
 #define _(x) gettext(x)
 

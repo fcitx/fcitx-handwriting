@@ -120,6 +120,13 @@ get_handwrite_config_dir ()
 	return configdir;
 }
 
+static void
+stroke_clean_draw ( KeyBoard *keyboard )
+{
+	stroke_clean ( keyboard->stk );
+        gtk_widget_queue_draw ( keyboard->window );
+}
+
 static gboolean
 create_dbus ( KeyBoard *keyboard )
 {
@@ -160,11 +167,7 @@ send_word_callback ( GtkButton *button, gpointer data )
 
 	handwriting_serice_sendword ( keyboard->service, label );
 
-	stroke_clean ( keyboard->stk );
-	gtk_widget_queue_draw ( keyboard->window );
-
-	stroke_clean ( keyboard->stk );
-	gtk_widget_queue_draw ( keyboard->window );
+	stroke_clean_draw ( keyboard );
 
 }
 
@@ -191,6 +194,7 @@ keyboard_english_callback ( GtkButton *button, gpointer data )
 		}
 	}
 	keyboard->pagenum = 0;
+	stroke_clean_draw ( keyboard );
 }
 
 static void
@@ -216,6 +220,7 @@ keyboard_number_callback ( GtkButton *button, gpointer data )
 		}
 	}
 	keyboard->pagenum = 0;
+	stroke_clean_draw ( keyboard );
 }
 
 static void
@@ -424,6 +429,15 @@ handwriter_expose_event ( GtkWidget * widget, GdkEventExpose * event, gpointer d
 	return TRUE;
 }
 
+static gboolean
+handwriter_notify_event ( GtkWidget * widget, GdkEventExpose * event, gpointer data )
+{
+	GdkCursorType ct;
+	
+	ct = GDK_PENCIL;
+	gdk_window_set_cursor ( widget->window , gdk_cursor_new ( ct ) );
+}
+
 static GtkWidget *
 create_handwriter_canvas ( KeyBoard *keyboard )
 {
@@ -436,7 +450,9 @@ create_handwriter_canvas ( KeyBoard *keyboard )
 	                        | GDK_BUTTON_PRESS_MASK
 	                        | GDK_BUTTON_RELEASE_MASK
 	                        | GDK_POINTER_MOTION_MASK
-	                        | GDK_POINTER_MOTION_HINT_MASK );
+	                        | GDK_POINTER_MOTION_HINT_MASK
+				| GDK_ENTER_NOTIFY_MASK
+				| GDK_LEAVE_NOTIFY_MASK );
 
 	sprintf ( filepath, "%s/writer.png", keyboard->userdir );
 	img = gtk_image_new_from_file ( filepath );
@@ -454,6 +470,9 @@ create_handwriter_canvas ( KeyBoard *keyboard )
 
 	g_signal_connect ( ebox, "expose-event",
 	                   G_CALLBACK ( handwriter_expose_event ), keyboard );
+
+	g_signal_connect ( ebox, "enter-notify-event",
+	                   G_CALLBACK ( handwriter_notify_event ), NULL );
 
 	return ebox;
 }

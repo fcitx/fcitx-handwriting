@@ -95,7 +95,7 @@ set_button_font ( GtkWidget *bt )
 {
 	GtkWidget *font_label;
 	PangoFontDescription* text_font = NULL;
-	text_font = pango_font_description_from_string ( "Arial,bold 17" );
+	text_font = pango_font_description_from_string ( "Arial,bold 14" );
 	font_label = gtk_bin_get_child ( GTK_BIN ( bt ) );
 	gtk_widget_modify_font ( font_label, text_font );
 }
@@ -124,7 +124,7 @@ static void
 stroke_clean_draw ( KeyBoard *keyboard )
 {
 	stroke_clean ( keyboard->stk );
-        gtk_widget_queue_draw ( keyboard->window );
+	gtk_widget_queue_draw ( keyboard->window );
 }
 
 static gboolean
@@ -436,6 +436,7 @@ handwriter_notify_event ( GtkWidget * widget, GdkEventExpose * event, gpointer d
 	
 	ct = GDK_PENCIL;
 	gdk_window_set_cursor ( widget->window , gdk_cursor_new ( ct ) );
+	return FALSE;
 }
 
 static GtkWidget *
@@ -484,10 +485,10 @@ create_hand_button ( KeyBoard *keyboard )
 	GtkWidget *drawing;
 	GtkWidget *hand_change_bt[8];
 	gchar *hand_button_info[] = {"ABC","123.,","上页","下页","删除","空格","回车","关闭"};
-	int btx[] = {8,8,8,8,705,705,705,705};
-	int bty[] = {8,58,108,158,8,58,108,158};
-	int btx1[] = {111,182,253,111,182,253,111,182,253};
-	int bty1[] = {11,11,11,75,75,75,139,139,139};
+	int btx[] = {8,8,8,8,573,573,573,573};
+	int bty[] = {15,60,105,150,15,60,105,150};
+	int btx1[] = {92,152,212,92,152,212,92,152,212};
+	int bty1[] = {15,15,15,75,75,75,137,137,137};
 	int i;
 
 	fixed = gtk_fixed_new ();
@@ -497,7 +498,7 @@ create_hand_button ( KeyBoard *keyboard )
 	for ( i = 0 ;i < HAND_BUTTON_NUM ; i++ )
 	{
 		keyboard->hand_button[i] = gtk_button_new ();
-		gtk_widget_set_size_request ( GTK_WIDGET ( keyboard->hand_button[i] ), 65, 58 );
+		gtk_widget_set_size_request ( GTK_WIDGET ( keyboard->hand_button[i] ), 52, 45 );
 		gtk_fixed_put ( GTK_FIXED ( fixed ), keyboard->hand_button[i], btx1[i], bty1[i] );
 		g_signal_connect ( keyboard->hand_button[i], "clicked", G_CALLBACK ( send_word_callback ), keyboard );
 		gtk_widget_set_name ( keyboard->hand_button[i], "button1" );
@@ -508,7 +509,7 @@ create_hand_button ( KeyBoard *keyboard )
 	for ( i = 0 ;i < 8 ; i++ )
 	{
 		hand_change_bt[i] = gtk_button_new_with_label ( hand_button_info[i] );
-		gtk_widget_set_size_request ( hand_change_bt[i], 86, 45 );
+		gtk_widget_set_size_request ( hand_change_bt[i], 65, 35 );
 		gtk_fixed_put ( GTK_FIXED ( fixed ), hand_change_bt[i], btx[i], bty[i] );
 		gtk_widget_set_name ( hand_change_bt[i], "button0" );
 		set_button_font ( hand_change_bt[i] );
@@ -525,7 +526,7 @@ create_hand_button ( KeyBoard *keyboard )
 
 	/* 创建手写的画图区域 */
 	drawing = create_handwriter_canvas ( keyboard );
-	gtk_fixed_put ( GTK_FIXED ( fixed ), drawing, 333, 8 );
+	gtk_fixed_put ( GTK_FIXED ( fixed ), drawing, 280, 8 );
 	gtk_widget_show ( drawing );
 
 	return fixed;
@@ -555,7 +556,7 @@ create_window ()
 
 	/* 创建键盘窗口 */
 	keyboard->window = gtk_window_new ( GTK_WINDOW_TOPLEVEL );
-	gtk_window_set_default_size ( GTK_WINDOW ( keyboard->window ), 800, 210 );
+	gtk_window_set_default_size ( GTK_WINDOW ( keyboard->window ), 650, 198 );
 	gtk_window_set_keep_above ( GTK_WINDOW ( keyboard->window ), TRUE );
 	gtk_window_set_accept_focus ( GTK_WINDOW ( keyboard->window ), FALSE );
 	gtk_window_set_skip_taskbar_hint ( GTK_WINDOW ( keyboard->window ), FALSE );
